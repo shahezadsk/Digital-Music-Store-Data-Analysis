@@ -1,0 +1,106 @@
+- Cleansing of data:
+1. remove redundant data or incorrect data
+2. Exclude data which is not required for your project.
+3. Fixing wrong data.
+4. etc etc.
+
+-- 1) Are there any albums owned by multiple artist?
+
+    select albumid, count(1) from Album
+    group by albumid
+    having count(1) > 1;
+    
+-- 2) Is there any invoice which is issued to a non existing customer?
+
+    select * from Invoice I
+    where not exists (select * from customer c
+                      where c.customerid = I.customerid);
+                      
+-- 3) Is there any invoice line for a non existing invoice?
+
+SELECT *
+FROM Invoiceline il
+LEFT JOIN Invoice i ON il.InvoiceId = i.InvoiceId
+WHERE i.InvoiceId IS NULL;
+
+-- 4) Are there albums without a title?
+
+SELECT *
+FROM album
+WHERE Title = '';
+
+
+-- SQL Queries to answer some questions from the chinook database.
+
+-- 1) Find the artist who has contributed with the maximum no of songs.
+       Display the artist name and the no of albums.
+  
+  SELECT ar.Name AS ArtistName,
+       COUNT(t.TrackId) AS NumberOfSongs,
+       COUNT(DISTINCT al.AlbumId) AS NumberOfAlbums
+FROM artist ar
+JOIN album al ON ar.ArtistId = al.ArtistId
+JOIN track t ON al.AlbumId = t.AlbumId
+GROUP BY ar.Name
+ORDER BY NumberOfSongs DESC
+LIMIT 1;
+
+-- 2) Display the name, email id, country of all listeners who love Jazz, Rock and Pop music.
+
+SELECT DISTINCT c.FirstName, c.LastName, c.Email, c.Country
+FROM customer c
+JOIN invoice i ON c.CustomerId = i.CustomerId
+JOIN invoiceline il ON i.InvoiceId = il.InvoiceId
+JOIN track t ON il.TrackId = t.TrackId
+JOIN genre g ON t.GenreId = g.GenreId
+WHERE g.Name IN ('Jazz', 'Rock', 'Pop')
+GROUP BY c.CustomerId, c.FirstName, c.LastName, c.Email, c.Country
+HAVING COUNT(DISTINCT g.Name) = 3;
+
+
+-- 3) Find the employee who has supported the most no of customers. Display the employee name and designation
+ 
+ SELECT 
+    e.FirstName , e.LastName AS EmployeeName,
+    e.Title AS Designation,
+    COUNT(DISTINCT c.CustomerId) AS NumberOfCustomersSupported
+FROM 
+    employee e
+JOIN 
+    customer c ON e.EmployeeId = c.SupportRepId
+GROUP BY 
+    e.EmployeeId, e.FirstName, e.LastName, e.Title
+ORDER BY 
+    NumberOfCustomersSupported DESC
+LIMIT 1;
+
+
+-- 4) Which city corresponds to the best customers?
+
+SELECT 
+    c.City,
+    SUM(i.Total) AS TotalSpent
+FROM 
+    customer c
+JOIN 
+    invoice i ON c.CustomerId = i.CustomerId
+GROUP BY 
+    c.City
+ORDER BY 
+    TotalSpent DESC
+LIMIT 1;
+
+
+-- 5) The highest number of invoices belongs to which country?
+
+
+SELECT 
+   BillingCountry AS Country,
+    COUNT(*) AS NumberOfInvoices
+FROM 
+    invoice
+GROUP BY 
+  BillingCountry
+ORDER BY 
+    NumberOfInvoices DESC
+LIMIT 1;
